@@ -2,7 +2,6 @@ import requests
 from colorama import Fore, Back, Style
 import re
 
-
 class solver():
     def __init__(self, key, debug=False):
         self.key = key
