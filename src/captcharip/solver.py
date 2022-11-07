@@ -1,6 +1,6 @@
-import requests
+import requests, re
 from colorama import Fore, Back, Style
-import re
+from exceptions import *
 
 class solver():
     def __init__(self, key, debug=False):
@@ -48,7 +48,7 @@ class solver():
         resp = requests.get("https://captcha.rip/api/balance", headers=headers).json()
         return resp["balance"] / 3 * 1000
 
-    def createTask(self, site, publicKey, service):
+    def createTask(self, site, publicKey, service="https://client-api.arkoselabs.com", blob="blob"):
         body = {
             "key": self.key,
             "task": {
@@ -56,7 +56,7 @@ class solver():
                 "site_url": str(site),
                 "public_key": str(publicKey),
                 "service_url": str(service),
-                "blob": "blob"
+                "blob": blob
             }
         }
 
@@ -64,9 +64,14 @@ class solver():
         resp = requests.post("https://captcha.rip/api/create", json=body).json()
         self.debug(f"Sent request.")
 
-        if "Service is currently offline" in str(resp):
-            self.log(f"captcha.rip is currently {Fore.RED}{Style.BRIGHT}offline{Fore.LIGHTGREEN_EX}{Style.NORMAL}, sorry.")
-            raise CaptchaRipOfflineError(resp["code"])
+        code = resp["code"]
+
+        match code:
+            case 24:
+                return PublicKeyBlacklistedError()
+            case 25:
+                self.log(f"captcha.rip is currently {Fore.RED}{Style.BRIGHT}offline{Fore.LIGHTGREEN_EX}{Style.NORMAL}, sorry.")
+                return CaptchaRipOfflineError()
 
         self.id = resp["id"]
         self.debug(f"Got captcha task ID - {Fore.CYAN}{self.id}")
@@ -85,15 +90,15 @@ class solver():
         resp = requests.post("https://captcha.rip/api/fetch", json=body).json()
         self.debug(f"Sent request.")
 
-        if "Service is currently offline" in str(resp):
-            self.log(f"captcha.rip is currently {Fore.RED}{Style.BRIGHT}offline{Fore.LIGHTGREEN_EX}{Style.NORMAL}, sorry.")
-            raise CaptchaRipOfflineError(resp["code"])
-
-        message = resp["message"]
         code = resp["code"]
+
+        if code == 25:
+            self.log(f"captcha.rip is currently {Fore.RED}{Style.BRIGHT}offline{Fore.LIGHTGREEN_EX}{Style.NORMAL}, sorry.")
+            raise CaptchaRipOfflineError()
+
         self.debug(f"Got response - {resp}")
         
-        if message == "Solved" or code == 1:
+        if code == 1:
             token = resp["token"]
             self.debug(f"Got captcha token - {Fore.CYAN}{token}")
             return token
@@ -107,12 +112,3 @@ class solver():
 
     def log(self, s):
         print(f"{Back.BLACK}{Fore.LIGHTGREEN_EX}[Solver] {s}{Style.RESET_ALL}")
-
-class CaptchaRipOfflineError(Exception):
-    def __init__(self, errorCode = "ploopy", message=f"{Fore.RED}{Style.BRIGHT}Captcha.rip is currently offline.{Style.RESET_ALL}"):
-        self.message = message
-        self.errorCode = errorCode
-        if errorCode != "ploopy":
-            super().__init__(f"{self.message} Error code: {self.errorCode}")
-        else:
-            super().__init__(self.message)

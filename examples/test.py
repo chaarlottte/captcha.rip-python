@@ -1,10 +1,7 @@
 import requests
 import json
 import time
-from captcha.solver import solver
-
-siteKeyPattern = 'public_key: "(.+?)",'
-url = "https://client-demo.arkoselabs.com/solo-animals"
+from captcharip.solver import solver
 
 with open("config.json", "r") as jsonfile:
     config = json.load(jsonfile)
@@ -13,8 +10,8 @@ with open("config.json", "r") as jsonfile:
 
 def main():
     captchaSolver = solver(key, enableDebug)
-    publicKey = captchaSolver.getPublicKey(url)
-    taskId = captchaSolver.createTask(url, publicKey, "https://client-api.arkoselabs.com")
+    publicKey = captchaSolver.getPublicKey("https://client-demo.arkoselabs.com/solo-animals")
+    taskId = captchaSolver.createTask("https://client-demo.arkoselabs.com/solo-animals", publicKey, "https://client-api.arkoselabs.com")
     token = "notReceivedYet"
 
     while(token == "notReceivedYet"):

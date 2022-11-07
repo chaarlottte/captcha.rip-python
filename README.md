@@ -3,14 +3,17 @@ API wrapper for https://captcha.rip written in Python.
 
 captcha.rip is an API built to solve FunCaptcha tasks. This is a python-based wrapper that I built for it to make things easier for myself.
 
+## Installation
+Simply run the command `pip install captcha.rip-api`, then use `from captcharip.solver import solver` to use the solver. 
+
 ## Usage
 You can check some of the [examples](https://github.com/chaarlottte/captcha.rip-python/tree/main/examples) I have provided if you want a more in-depth example than below.
 
 ```python
-from solver import solver
 import requests
 import json
 import time
+from captcharip.solver import solver
 
 captchaSolver = solver("yourkey", True) # initialize the solver. params: your captcha.rip API key, whether to enable debug mode
 publicKey = captchaSolver.getPublicKey(url) # get a site's public key. params: the URL you want to get the public key from
